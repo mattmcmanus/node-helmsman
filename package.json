@@ -2,13 +2,24 @@
   "name": "helmsman",
   "version": "0.0.1",
   "description": "Easily make command line interfaces using git style subcommands",
+  "homepage": "https://github.com/mattmcmanus/node-helmsman",
+  "author": {
+    "name": "Matt McManus",
+    "email": "mcmanus@punkave.com"
+  },
   "main": "helmsman.js",
   "scripts": {
-    "test": "npm test"
+    "test": "tap test"
+  },
+  "engines": {
+    "node": ">= 0.10.0"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:mattmcmanus/node-helmsman.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mattmcmanus/node-helmsman/issues"
   },
   "keywords": [
     "cli",
@@ -16,14 +27,12 @@
     "subcommand",
     "sub-command"
   ],
-  "author": {
-    "name": "Matt McManus",
-    "email": "mcmanus@punkave.com"
-  },
-  "license": "BSD",
-  "bugs": {
-    "url": "https://github.com/mattmcmanus/node-helmsman/issues"
-  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/mattmcmanus/node-helmsman/blob/master/LICENSE-MIT"
+    }
+  ],
   "devDependencies": {
     "tap": "~0.4.3"
   },

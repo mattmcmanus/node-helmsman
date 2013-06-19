@@ -32,12 +32,13 @@ function err(mes) {
  * @param  {object} options   config
  */
 function Helmsman(options){
-  events.EventEmitter.call(this);
+  var self = this;
+
+  events.EventEmitter.call(self);
 
   if (!options) { options = {}; }
 
-  this.localFolder = path.dirname(module.parent.filename);
-
+  this.localFolder = path.resolve(options.localFolder) || path.dirname(module.parent.filename);
   this.prefix = options.prefix || path.basename(process.argv[1]);
   this.availableCommands = {};
   this.commandMaxLength = 0; //For printing help later
@@ -46,6 +47,17 @@ function Helmsman(options){
   if (this.prefix.substr(-1) !== '-') {
     this.prefix += '-';
   }
+
+  // Local files in files in the /bin folder for an application
+  this.localFiles = glob.sync(self.prefix+"*", {cwd: self.localFolder});
+  
+  this.localFiles.forEach(function(file){
+    // Figure out the longest command name for printing --help
+    if (file.length > self.commandMaxLength) { self.commandMaxLength = file.length; }
+
+    var commandData = require(path.join(self.localFolder, file)).command;
+    self.availableCommands[file.substr(self.prefix.length)] = commandData;
+  });
 }
 
 util.inherits(Helmsman, events.EventEmitter);
@@ -78,17 +90,6 @@ Helmsman.prototype.parse = function(argv){
   argv = argv || process.argv; // If no arguments are passed, assume process.argv
 
   var args = argv.slice(2);
-
-  // Local files in files in the /bin folder for an application
-  var localFiles = glob.sync(self.prefix+"*", {cwd: self.localFolder});
-
-  localFiles.forEach(function(file){
-    // Figure out the longest command name for printing --help
-    if (file.length > self.commandMaxLength) { self.commandMaxLength = file.length; }
-    
-    var commandData = require(path.join(self.localFolder, file)).command;
-    self.availableCommands[file.substr(self.prefix.length)] = commandData;
-  });
 
   // Much of the following heavily inspired or simply taken from component/bin
   // https://github.com/component/component/blob/master/bin/component
