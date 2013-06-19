@@ -1,6 +1,6 @@
 {
   "name": "helmsman",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Easily make command line interfaces using git style subcommands",
   "main": "helmsman.js",
   "scripts": {
