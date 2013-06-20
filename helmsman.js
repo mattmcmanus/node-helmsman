@@ -83,6 +83,8 @@ function helmsman(options){
 
 /**
  * GO!
+ *
+ * @param {[Object]} argv   The process arguments to parse. Defaults to process.argv
  */
 Helmsman.prototype.parse = function(argv){
   var self = this;

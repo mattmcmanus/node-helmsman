@@ -86,6 +86,10 @@ Create an instance of `helmsman`. It is an `EventEmitter` and will also begin se
 * `localFolder`: The local module folder where to search for executable files. Defaults to the directory of the executable (eg: If you execute `<module folder>/bin/<command>` the `localFolder` will be `<module folder>/bin`)
 * `prefix`: The prefix of the subcommands to search for. Defaults to the executed file (eg: If you run `<command>` it will search for files in the `localFolder` that start with `<command>-`
 
+#### Methods
+
+* `parse([argv])` Parse `argv` or `process.argv` if there is no argv and either display the help or run the subcommand
+
 ## TODO
 
 * [Allow for automatically including npm installed libraries](https://github.com/mattmcmanus/node-helmsman/issues/2)
