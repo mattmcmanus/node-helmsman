@@ -38,7 +38,12 @@ function Helmsman(options){
 
   if (!options) { options = {}; }
 
-  this.localFolder = path.resolve(options.localFolder) || path.dirname(module.parent.filename);
+  if (!options.localDir) {
+    this.localDir = path.dirname(module.parent.filename);
+  } else {
+    this.localDir = path.resolve(options.localDir);
+  }
+
   this.prefix = options.prefix || path.basename(process.argv[1]);
   this.availableCommands = {};
   this.commandMaxLength = 0; //For printing help later
@@ -49,13 +54,13 @@ function Helmsman(options){
   }
 
   // Local files in files in the /bin folder for an application
-  this.localFiles = glob.sync(self.prefix+"*", {cwd: self.localFolder});
+  this.localFiles = glob.sync(self.prefix+"*", {cwd: self.localDir});
   
   this.localFiles.forEach(function(file){
     // Figure out the longest command name for printing --help
     if (file.length > self.commandMaxLength) { self.commandMaxLength = file.length; }
 
-    var commandData = require(path.join(self.localFolder, file)).command;
+    var commandData = require(path.join(self.localDir, file)).command;
     self.availableCommands[file.substr(self.prefix.length)] = commandData;
   });
 }
@@ -76,6 +81,7 @@ util.inherits(Helmsman, events.EventEmitter);
  * @param  {Object} options   Contructor options
  * @return {Helmsman}         A new helmsman
  */
+
 function helmsman(options){
   return new Helmsman(options);
 }
@@ -86,6 +92,7 @@ function helmsman(options){
  *
  * @param {[Object]} argv   The process arguments to parse. Defaults to process.argv
  */
+
 Helmsman.prototype.parse = function(argv){
   var self = this;
 
@@ -108,7 +115,7 @@ Helmsman.prototype.parse = function(argv){
     err(util.format('There is no "%s" command', cmd));
   }
 
-  var bin = path.join(self.localFolder, self.prefix + cmd);
+  var bin = path.join(self.localDir, self.prefix + cmd);
   var subcommand = spawn(bin, args, { stdio: 'inherit' });
 
   subcommand.on('close', function(code){
@@ -120,6 +127,7 @@ Helmsman.prototype.parse = function(argv){
 /**
  * Show the help
  */
+
 Helmsman.prototype.showHelp = function(){
   var self = this;
   
