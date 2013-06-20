@@ -104,7 +104,7 @@ Helmsman.prototype.parse = function(argv){
   // https://github.com/component/component/blob/master/bin/component
   
   // Print the command list if --help is called
-  if (args[0] === '--help' || !args.length) {
+  if (args[0] === '--help' || !args.length || args[0][0] === '-') {
     self.emit('--help');
     return self.showHelp();
   }
