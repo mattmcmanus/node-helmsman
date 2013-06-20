@@ -1,22 +1,19 @@
 # node-helmsman
 
-Easily make command line interfaces using git style subcommands
+Easily make command line interfaces using git style subcommands executables
 
-Say your `bin/` folder includes the following files:
+## So what does helmsman actually do?
 
-* `git`
-* `git-status`
-* `git-commit`
-* `git-revert`
-* ...
+A common setup for command line applications is `<command> <subcommand> <arguments/options>` (for example: `git commit -m 'message'`). Rather than having a giant file that `switch`es or `if else`s over each potential subcommand, it's much neater to store each subcommand in it's own file (`bin/command`,`bin/command-subcomand`, `bin/command-subcommand2`, etc). Doing this however introduces some annoying manual steps which `helmsman` hopes to solve.
 
-Wouldn't it be nice if:
+It makes it very easy to add, modify or delete subcommands without having to do housekeeping steps in your root command file or `package.json`
 
-* Running `git --help` automatically generated help output, telling you all the subcommands that are available to you?
-* Running `git status` automatically runs the `git-status` file, passing all the arguments & options?
-* The subcommand (`git-status`) could use whatever option parsing library you wanted (commander or optimist)?
-
-Super! Helmsman is here to help!
+* `helmsman` is automatically aware of all the `<command>-<subcommand>` files in your modules `bin/` (or any folder you tell it to look at)
+* Running `<command> --help` automatically generates help output, telling you all the subcommands that are available to you
+* Running `<command> <subcommand>` automatically runs the `<command>-<subcommand>` file, passing along all the arguments & options
+   * You can even add to or modify them before it's sent to the subcommand
+* Like [optimist](https://github.com/substack/node-optimist)? Prefer [commander](https://github.com/visionmedia/commander.js)? Prefer to do all that yourself? I DON'T GIVE A DAMN and either does `helmsman`. It simply executes the files and passes along the options
+* Your subcommands don't even need to know about `helmsmen`. All you need to do is add `exports.command ={}` to provide a description of the command to `helmsman`
 
 ## Installation & Setup
 
@@ -26,11 +23,13 @@ In your command line application folder:
 npm install helmsman --save
 ```
 
-### Setting up your main executable
+### Setting up your main executable: `<command>`
 
-In your main executable (eq: `git`), add `helmsman`:
+In your main executable, add `helmsman`:
 
 ```javascript
+#!/usr/bin/env node
+
 var helmsman = require('helmsman');
 
 helmsman().parse();
@@ -39,6 +38,8 @@ helmsman().parse();
 Want to add custom help before the generated help?
 
 ```javascript
+#!/usr/bin/env node
+
 var helmsman = require('helmsman');
 
 var cli = helmsman()
@@ -50,21 +51,19 @@ cli.on('--help', function(){
 cli.parse();
 ```
 
-### Setting up your sub-commands
+### Setting up your sub-commands: `<command>-<subcommand>`
 
-For your sub-executables to work with `helmsman` you need to do two things: 1. Expose metadata about the task, like its description and 2. Make sure the meat & pototoes of the script only runs when it's directly called
-
-To expose the metadata simply `exports.command`
+For your sub-executables to work with `helmsman` you need to do two things: 1. Expose metadata about the task, like its description and 2. Make sure the meat & potatoes of the script only runs when it's directly called
 
 ```javascript
+#!/usr/bin/env node
+
+// 1. To expose the metadata simply `exports.command`
 exports.command = {
   description: 'Show current worker counts and their pids'
 };
-```
 
-Then make sure it only runs when it's directly called:
-
-```javascript
+// 2. Then make sure it only runs when it's directly called:
 if (require.main === module) {
   // Parse options and run the magic
 }
@@ -72,7 +71,20 @@ if (require.main === module) {
 
 ## API
 
-...
+### helmsman([options]) or new Helmsman([options])
+
+* `options` {Object}
+
+Create an instance of `helmsman`. It is an `EventEmitter` and will also begin searching for files once it's instantiated. 
+
+#### Events
+
+* `--help`: Emitted when `--help` is passed as the first option or no commands or options are passed
+
+#### Options
+
+* `localFolder`: The local module folder where to search for executable files. Defaults to the directory of the executable (eg: If you execute `<module folder>/bin/<command>` the `localFolder` will be `<module folder>/bin`)
+* `prefix`: The prefix of the subcommands to search for. Defaults to the executed file (eg: If you run `<command>` it will search for files in the `localFolder` that start with `<command>-`
 
 ## TODO
 
