@@ -13,7 +13,7 @@ It makes it very easy to add, modify or delete subcommands without having to do 
 * Running `<command> <subcommand>` automatically runs the `<command>-<subcommand>` file, passing along all the arguments & options
    * You can even add to or modify them before it's sent to the subcommand
 * Like [optimist](https://github.com/substack/node-optimist)? Prefer [commander](https://github.com/visionmedia/commander.js)? Prefer to do all that yourself? I DON'T GIVE A DAMN and either does `helmsman`. It simply executes the files and passes along the options
-* Your subcommands don't even need to know about `helmsmen`. All you need to do is add `exports.command ={}` to provide a description of the command to `helmsman`
+* Your subcommands don't even need to know about `helmsman`. All you need to do is add `exports.command ={}` to provide a description of the command to `helmsman`
 
 ## Installation & Setup
 
