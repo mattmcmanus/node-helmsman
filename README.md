@@ -13,7 +13,7 @@ It makes it very easy to add, modify or delete subcommands without having to do 
 * Running `<command> <subcommand>` automatically runs the `<command>-<subcommand>` file, passing along all the arguments & options
    * You can even add to or modify them before it's sent to the subcommand
 * Like [optimist](https://github.com/substack/node-optimist)? Prefer [commander](https://github.com/visionmedia/commander.js)? Prefer to do all that yourself? I DON'T GIVE A DAMN and either does `helmsman`. It simply executes the files and passes along the options
-* Your subcommands don't even need to know about `helmsmen`. All you need to do is add `exports.command ={}` to provide a description of the command to `helmsman`
+* Your subcommands don't even need to know about `helmsmen`. All you need to do is add `exports.command = {}` to provide a description of the command to `helmsman`
 
 ## Installation & Setup
 
@@ -58,16 +58,18 @@ For your sub-executables to work with `helmsman` you need to do two things: 1. E
 ```javascript
 #!/usr/bin/env node
 
-// 1. To expose the metadata simply `exports.command`
+// 1. Expose the metadata
 exports.command = {
   description: 'Show current worker counts and their pids'
 };
 
-// 2. Then make sure it only runs when it's directly called:
+// 2. Make sure it only runs when it's directly called:
 if (require.main === module) {
   // Parse options and run the magic
 }
 ```
+
+**Note:** If you're not putting each script in `package.json`'s `bin` object, make sure that the sub-commands are executable by running `chmod +x bin/<command>-<sub-command>
 
 ## API
 
@@ -89,6 +91,11 @@ Create an instance of `helmsman`. It is an `EventEmitter` and will also begin se
 #### Methods
 
 * `parse([argv])` Parse `argv` or `process.argv` if there is no argv and either display the help or run the subcommand
+
+### <subcommand> `exports.command`
+
+* `description`: A one line description of the command. Required.
+* `options`: A shorthand for options the subcommand accepts. Generated help will include it next to command. See `help <command>`"
 
 ## TODO
 

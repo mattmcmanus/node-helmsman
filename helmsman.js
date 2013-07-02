@@ -17,11 +17,6 @@ module.exports = exports = helmsman;
 exports.Helmsman = Helmsman;
 
 
-function err(mes) {
-  util.error(mes.red);
-  process.exit(1);
-}
-
 /**
  * The Helmsman constructor
  *
@@ -46,7 +41,7 @@ function Helmsman(options){
 
   this.prefix = options.prefix || path.basename(process.argv[1]);
   this.availableCommands = {};
-  this.commandMaxLength = 0; //For printing help later
+  this.commandMaxLength = 18; //For printing help later, 18 is help <sub-command>
 
   // Add a dash to the end if none was provided
   if (this.prefix.substr(-1) !== '-') {
@@ -58,11 +53,18 @@ function Helmsman(options){
   
   this.localFiles.forEach(function(file){
     // Figure out the longest command name for printing --help
-    if (file.length > self.commandMaxLength) { self.commandMaxLength = file.length; }
-
     var commandData = require(path.join(self.localDir, file)).command;
     self.availableCommands[file.substr(self.prefix.length)] = commandData;
+
+    var fullCommand = (commandData.options) ? file + ' ' + commandData.command : file
+
+    if (fullCommand.length > self.commandMaxLength) { self.commandMaxLength = file.length; }
   });
+
+  self.availableCommands['help'] = { // help is always available!
+    options: '<sub-command>',
+    description: 'Show the --help for that specific command'
+  }
 }
 
 util.inherits(Helmsman, events.EventEmitter);
@@ -104,15 +106,24 @@ Helmsman.prototype.parse = function(argv){
   // https://github.com/component/component/blob/master/bin/component
   
   // Print the command list if --help is called
-  if (args[0] === '--help' || !args.length || args[0][0] === '-') {
+  if (args[0] === '--help' || !args.length || args[0][0] === '-' || (args[0] === 'help' && args.length === 1)) {
     self.emit('--help');
     return self.showHelp();
   }
 
   var cmd = args.shift();
-
+  
+  // Implicit help
+  // If <command> help <sub-command> is entered, automatically run <command>-<sub-command> --help
+  if (cmd === 'help') {
+    cmd = args.shift();
+    args = ['--help'];
+  }
+  
   if (!~Object.keys(self.availableCommands).indexOf(cmd)) {
-    err(util.format('There is no "%s" command', cmd));
+    util.error(util.format('There is no "%s" command'.red, cmd));
+    self.showHelp();
+    process.exit(1);
   }
 
   var bin = path.join(self.localDir, self.prefix + cmd);
@@ -137,8 +148,13 @@ Helmsman.prototype.showHelp = function(){
   
   for (var command in self.availableCommands) {
     var prettyCommand = command;
+
+    if (self.availableCommands[command].options) {
+      prettyCommand += ' ' + self.availableCommands[command].options;
+    }
     // Pad spaces at the end of each command so help descriptions line up
-    for (var i = 0; i < self.commandMaxLength-command.length; i++) {
+    var diff = (self.commandMaxLength-prettyCommand.length);
+    for (var i = 0; i < diff; i++) {
       prettyCommand+=' ';
     }
     // console.log(self.availableCommands[command]);
