@@ -100,3 +100,7 @@ Create an instance of `helmsman`. It is an `EventEmitter` and will also begin se
 ## TODO
 
 * [Allow for automatically including npm installed libraries](https://github.com/mattmcmanus/node-helmsman/issues/2)
+
+## Thanks
+
+Much of this was inspired by TJ Holowaychuk [commander](https://github.com/visionmedia/commander.js) and [component](https://github.com/component/component)
