@@ -9,6 +9,7 @@ var path = require('path');
 var glob = require('glob');
 var colors = require('colors');
 var spawn = require('child_process').spawn;
+var _s = require('underscore.string');
 
 /**
  * Exports
@@ -90,6 +91,59 @@ function helmsman(options){
 
 
 /**
+ * Determine the subcommand to run
+ *
+ *  Try:
+ *    * Explicit match (status === status)
+ *    * Shorthand (st === status)
+ *    * Levenshtein of <=2 (sratus === status)
+ * 
+ * @param  {String} cmd The command given to the script
+ * @param  {[String]} availableCommands An array of all the available commands
+ * @return {String}     The actual command that will be run
+ */
+Helmsman.prototype.getCommand = function(cmd, availableCommands){
+  var self = this;
+  
+  if (!availableCommands) {
+    availableCommands = Object.keys(self.availableCommands);
+  }
+  
+  // If there is an exact match, return it
+  if (~availableCommands.indexOf(cmd)) {
+    return cmd;
+  }
+
+  // Detirmine how many commands match the iterator. Return one if command, 
+  function isOneOrMore(commands, iterator){
+    var list = commands.filter(iterator)
+
+    if (list.length === 1) {
+      return list[0];
+    } else if (list.length > 1) {
+      return new Error(util.format('There are %d potential options for "%s": %s', list.length, cmd, list));
+    } else {
+      return false;
+    }
+  }
+
+  // If there is a shorthand match, return it
+  var shortHandCmd = isOneOrMore(availableCommands, function(command){ 
+    return (command.indexOf(cmd) === 0);
+  })
+  if (shortHandCmd) { return shortHandCmd; }
+
+  // If there is a close match, return it
+  var similarCmd = isOneOrMore(availableCommands, function(command){ 
+    return (_s.levenshtein(cmd, command) <= 2);
+  })
+  if (similarCmd) { return similarCmd; }
+
+  // If nothing, then get outta here
+  return new Error(util.format('There are no commands by the name of "%s"', cmd));
+}
+
+/**
  * GO!
  *
  * @param {[Object]} argv   The process arguments to parse. Defaults to process.argv
@@ -111,8 +165,14 @@ Helmsman.prototype.parse = function(argv){
     return self.showHelp();
   }
 
-  var cmd = args.shift();
-  
+  var cmd = self.getCommand(args.shift());
+
+  if ('Error' === typeof cmd) {
+    util.error(e.message.red);
+    self.showHelp();
+    process.exit(1);
+  }
+
   // Implicit help
   // If <command> help <sub-command> is entered, automatically run <command>-<sub-command> --help
   if (cmd === 'help') {
@@ -120,14 +180,8 @@ Helmsman.prototype.parse = function(argv){
     args = ['--help'];
   }
   
-  if (!~Object.keys(self.availableCommands).indexOf(cmd)) {
-    util.error(util.format('There is no "%s" command'.red, cmd));
-    self.showHelp();
-    process.exit(1);
-  }
-
-  var bin = path.join(self.localDir, self.prefix + cmd);
-  var subcommand = spawn(bin, args, { stdio: 'inherit' });
+  var binPath = path.join(self.localDir, self.prefix + cmd);
+  var subcommand = spawn(binPath, args, { stdio: 'inherit' });
 
   subcommand.on('close', function(code){
     process.exit(code);

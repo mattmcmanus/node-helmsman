@@ -12,7 +12,14 @@ test('construct an instance of a helmsman', function(t){
   t.equal(cli.availableCommands.subcommand.description, 'A test', 'A subcommand\'s meta data is loaded');
 });
 
-test('description', function(t) {
-  t.plan(1);
-  t.ok(cli.parse(), 'Everything parses without error');
-});
+test('Guess the right command', function(t){
+  t.plan(5);
+
+  var availableCommands = ['status', 'install', 'info'];
+
+  t.equal(cli.getCommand('status', availableCommands), 'status', '"status" returned status');
+  t.equal(cli.getCommand('st', availableCommands), 'status', '"st" returned status');
+  t.equal(cli.getCommand('isntall', availableCommands), 'install', '"isntall" returned install');
+  t.similar(cli.getCommand('in', availableCommands), {message:'There are 2 potential options for "in": install,info'})
+  t.similar(cli.getCommand('delete', availableCommands), {message:'There are no commands by the name of "delete"'})
+})

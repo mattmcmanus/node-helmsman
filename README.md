@@ -4,16 +4,16 @@ Easily make command line interfaces using git style subcommands executables
 
 ## So what does helmsman actually do?
 
-A common setup for command line applications is `<command> <subcommand> <arguments/options>` (for example: `git commit -m 'message'`). Rather than having a giant file that `switch`es or `if else`s over each potential subcommand, it's much neater to store each subcommand in it's own file (`bin/command`,`bin/command-subcomand`, `bin/command-subcommand2`, etc). Doing this however introduces some annoying manual steps which `helmsman` hopes to solve.
+A common setup for command line applications is `<command> <subcommand> <arguments/options>` (for example: `git commit -m 'message'`). Rather than having a giant file that `switch`es or `if else`s over each potential subcommand, it's much neater to store each subcommand in it's own file (`bin/command`,`bin/command-subcomand`, `bin/command-subcommand2`, etc). Helmsman makes it easy to add, modify or delete subcommands without having to do housekeeping steps in your root command file or `package.json`
 
-It makes it very easy to add, modify or delete subcommands without having to do housekeeping steps in your root command file or `package.json`
+### Features
 
-* `helmsman` is automatically aware of all the `<command>-<subcommand>` files in your modules `bin/` (or any folder you tell it to look at)
+* Helmsman is automatically aware of all the `<command>-<subcommand>` files in your modules `bin/` (or any folder you tell it to look at)
 * Running `<command> --help` automatically generates help output, telling you all the subcommands that are available to you
-* Running `<command> <subcommand>` automatically runs the `<command>-<subcommand>` file, passing along all the arguments & options
-   * You can even add to or modify them before it's sent to the subcommand
-* Like [optimist](https://github.com/substack/node-optimist)? Prefer [commander](https://github.com/visionmedia/commander.js)? Prefer to do all that yourself? I DON'T GIVE A DAMN and either does `helmsman`. It simply executes the files and passes along the options
-* Your subcommands don't even need to know about `helmsmen`. All you need to do is add `exports.command = {}` to provide a description of the command to `helmsman`
+* Running `<command> <subcommand>` automatically executes the `<command>-<subcommand>` file, passing along all the arguments & options
+* Helmsman is capable of smart command completion including dynamic shorthands and spelling correction (eg: `<command> st => `<command> status` or `<command> isntall` => `<command> install` )
+* Use whatever option parsing library you want for your subcommands ([optimist](https://github.com/substack/node-optimist), [commander](https://github.com/visionmedia/commander.js), etc)
+* Helmsman is [minimally intrusive in your subcommands](#setting-up-your-sub-commands-command-subcommand)
 
 ## Installation & Setup
 
@@ -35,7 +35,7 @@ var helmsman = require('helmsman');
 helmsman().parse();
 ```
 
-Want to add custom help before the generated help?
+Want to append in additional help messaging or modify the arguments that are parsed?
 
 ```javascript
 #!/usr/bin/env node
@@ -48,7 +48,12 @@ cli.on('--help', function(){
   console.log('EXTRA HELPFUL!');
 });
 
-cli.parse();
+var argv = process.argv;
+
+argv.push('--pizza');
+
+// parse() can accept modified arguments, otherwise it defaults to process.argv
+cli.parse(argv);
 ```
 
 ### Setting up your sub-commands: `<command>-<subcommand>`
@@ -103,4 +108,4 @@ Create an instance of `helmsman`. It is an `EventEmitter` and will also begin se
 
 ## Thanks
 
-Much of this was inspired by TJ Holowaychuk [commander](https://github.com/visionmedia/commander.js) and [component](https://github.com/component/component)
+Much of this was inspired by TJ Holowaychuk's [commander](https://github.com/visionmedia/commander.js) and [component](https://github.com/component/component)
