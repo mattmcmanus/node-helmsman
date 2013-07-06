@@ -3,6 +3,7 @@
 /*!
  * Module dependencies.
  */
+var fs = require('fs');
 var util = require('util');
 var events = require("events");
 var path = require('path');
@@ -159,6 +160,14 @@ Helmsman.prototype.parse = function(argv){
   // Much of the following heavily inspired or simply taken from component/bin
   // https://github.com/component/component/blob/master/bin/component
   
+  // Print the modules version number
+  if (args[0] === '--version') {
+    // BOLD assumption that the file is in ./bin
+    var packagePath = path.join(path.dirname(require.main.filename), '..', 'package.json');
+    var pkg = require(packagePath);
+    return console.log(pkg.name + ": " + pkg.version)
+  }
+
   // Print the command list if --help is called
   if (args[0] === '--help' || !args.length || args[0][0] === '-' || (args[0] === 'help' && args.length === 1)) {
     self.emit('--help');
