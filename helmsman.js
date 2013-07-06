@@ -41,7 +41,14 @@ function Helmsman(options){
     this.localDir = path.resolve(options.localDir);
   }
 
-  this.prefix = options.prefix || path.basename(process.argv[1]);
+  // Guess the prefix. Assume if one isn't given and that executable doesn't equal 
+  // the root command filename, use the filename of the root command
+  if (!options.prefix && path.basename(process.argv[1]) !== path.basename(require.main.filename)) {
+    this.prefix = path.basename(require.main.filename)
+  } else {
+    this.prefix = options.prefix || path.basename(process.argv[1]);
+  }
+
   this.availableCommands = {};
   this.commandMaxLength = 18; //For printing help later, 18 is help <sub-command>
 
@@ -56,6 +63,12 @@ function Helmsman(options){
   this.localFiles.forEach(function(file){
     // Figure out the longest command name for printing --help
     var commandData = require(path.join(self.localDir, file)).command;
+
+    if (!commandData) {
+      util.error('The file ('+file+') did not export.command. Please ensure your commands are setup properly and your prefix is correct'.red);
+      process.exit(1);
+    }
+
     self.availableCommands[file.substr(self.prefix.length)] = commandData;
 
     var fullCommand = (commandData.options) ? file + ' ' + commandData.command : file
@@ -65,7 +78,7 @@ function Helmsman(options){
 
   self.availableCommands['help'] = { // help is always available!
     options: '<sub-command>',
-    description: 'Show the --help for that specific command'
+    description: 'Show the --help for a specific command'
   }
 }
 

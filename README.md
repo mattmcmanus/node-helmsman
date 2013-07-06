@@ -9,7 +9,8 @@ A common setup for command line applications is `<command> <subcommand> <argumen
 ### Features
 
 * Helmsman is automatically aware of all the `<command>-<subcommand>` files in your modules `bin/` (or any folder you tell it to look at)
-* Running `<command> --help` automatically generates help output, telling you all the subcommands that are available to you
+* `<command> --help` automatically generates help output, telling you all the subcommands that are available to you
+* `<command> --versions` prints the version from package.json of the module requiring helmsman
 * Running `<command> <subcommand>` automatically executes the `<command>-<subcommand>` file, passing along all the arguments & options
 * Helmsman is capable of smart command completion including dynamic shorthands and spelling correction (eg: `<command> st` => `<command> status` or `<command> isntall` => `<command> install` )
 * Use whatever option parsing library you want for your subcommands ([optimist](https://github.com/substack/node-optimist), [commander](https://github.com/visionmedia/commander.js), etc)
