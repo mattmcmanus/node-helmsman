@@ -11,7 +11,7 @@ var glob = require('glob');
 var colors = require('colors');
 var spawn = require('child_process').spawn;
 var _s = require('underscore.string');
-
+var domain = require('domain').create();
 /**
  * Exports
  */
@@ -203,10 +203,24 @@ Helmsman.prototype.parse = function(argv){
   }
   
   var binPath = path.join(self.localDir, self.prefix + cmd);
-  var subcommand = spawn(binPath, args, { stdio: 'inherit' });
 
-  subcommand.on('close', function(code){
-    process.exit(code);
+  domain.on('error', function(err) {
+    if (err.code === 'EACCES') {
+      console.error('');
+      console.error('Could not execute the subcommand: ' + self.prefix + cmd);
+      console.error('');
+      console.error('Consider running:\n chmod +x '+binPath);
+    } else {
+      console.error(err.stack.red);
+    }
+  });
+  
+  domain.run(function() {
+    var subcommand = spawn(binPath, args, { stdio: 'inherit' });
+
+    subcommand.on('close', function(code){
+      process.exit(code);
+    });
   });
 };
 
