@@ -231,25 +231,34 @@ Helmsman.prototype.parse = function(argv){
 
 Helmsman.prototype.showHelp = function(){
   var self = this;
-  
+  var fullCommands = [];
+
   console.log('');
   console.log('Commands:');
   console.log('');
   
   for (var command in self.availableCommands) {
-    var prettyCommand = command;
+    var fullCommand = command;
     // console.log(command, self.availableCommands[command].options, "\n")
     if (self.availableCommands[command].arguments) {
-      prettyCommand += ' ' + self.availableCommands[command].arguments;
+      fullCommand += ' ' + self.availableCommands[command].arguments;
     }
-    // Pad spaces at the end of each command so help descriptions line up
-    var diff = (self.commandMaxLength-prettyCommand.length);
-    for (var i = 0; i < diff; i++) {
-      prettyCommand+=' ';
+
+    if (fullCommand.length > self.commandMaxLength) {
+      self.commandMaxLength = fullCommand.length;
     }
-    // console.log(self.availableCommands[command]);
-    console.log('   %s     %s', prettyCommand, self.availableCommands[command].description);
+
+    fullCommands.push([fullCommand, self.availableCommands[command].description]);
   }
+
+  fullCommands.forEach(function(command){
+    var diff = (self.commandMaxLength - command[0].length);
+    // Pad spaces at the end of each command so help descriptions line up
+    for (var i = 0; i < diff; i++) {
+      command[0]+=' ';
+    }
+    console.log('   %s     %s', command[0], command[1]);
+  })
 
   process.exit();
 };
