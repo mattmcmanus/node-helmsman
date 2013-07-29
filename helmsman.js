@@ -77,7 +77,7 @@ function Helmsman(options){
   });
 
   self.availableCommands['help'] = { // help is always available!
-    options: '<sub-command>',
+    arguments: '<sub-command>',
     description: 'Show the --help for a specific command'
   }
 }
@@ -238,9 +238,9 @@ Helmsman.prototype.showHelp = function(){
   
   for (var command in self.availableCommands) {
     var prettyCommand = command;
-
-    if (self.availableCommands[command].options) {
-      prettyCommand += ' ' + self.availableCommands[command].options;
+    // console.log(command, self.availableCommands[command].options, "\n")
+    if (self.availableCommands[command].arguments) {
+      prettyCommand += ' ' + self.availableCommands[command].arguments;
     }
     // Pad spaces at the end of each command so help descriptions line up
     var diff = (self.commandMaxLength-prettyCommand.length);
