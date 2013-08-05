@@ -189,8 +189,8 @@ Helmsman.prototype.parse = function(argv){
 
   var cmd = self.getCommand(args.shift());
 
-  if ('Error' === typeof cmd) {
-    util.error(e.message.red);
+  if ('object' === typeof cmd && cmd.name === "Error") {
+    util.error(cmd.message.red);
     self.showHelp();
     process.exit(1);
   }
