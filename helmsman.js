@@ -8,6 +8,7 @@ var events = require("events");
 var path = require('path');
 var glob = require('glob');
 var spawn = require('child_process').spawn;
+var _ = require('lodash');
 var _s = require('underscore.string');
 
 var domain = require('domain').create();
@@ -36,7 +37,13 @@ function Helmsman(options){
 
   events.EventEmitter.call(self);
 
-  if (!options) { options = {}; }
+  options = options || {};
+
+  // Add option defaults
+  options = _.merge({
+    usePath: false,
+    metadata: {}
+  }, options);
 
   if (!options.localDir) {
     this.localDir = path.dirname(module.parent.filename);
@@ -68,15 +75,41 @@ function Helmsman(options){
       return path.join(self.localDir, file);
     });
 
+  if (options.usePath) {
+    var pathTokens = process.env.PATH.split(':');
+
+    pathTokens.forEach(function (pathToken) {
+      self.localFiles = self.localFiles.concat(glob.sync(self.prefix + '*',
+        {cwd: pathToken}).map(function (file) {
+          return path.join(pathToken, file);
+        }));
+    });
+  }
+
   this.localFiles.forEach(function(file) {
     var extension = path.extname(file);
     var name = path.basename(file, extension).substr(self.prefix.length);
 
-    var commandData = require(file).command;
+    var commandData = {
+      description: ''
+    };
 
-    if (!commandData) {
-      util.error('The file ('+file+') did not export.command. Please ensure your commands are setup properly and your prefix is correct'.red);
-      process.exit(1);
+    // Load the command data from the metadata option if present
+    if (options.metadata[name]) {
+      commandData = _.merge(commandData, options.metadata[name]);
+    // Only try to get metadata from commands written in JavaScript
+    } else if (extension === '' || extension === '.js') {
+      try {
+        commandData = _.merge(commandData, require(file).command);
+      } catch (e) {
+        // If it is JavaScript and we fail to require it's an error
+        if (extension === '.js') {
+          util.error(util.format('The file "%s" did not load correctly: %s',
+            file, e).red);
+
+          process.exit(1);
+        }
+      }
     }
 
     commandData.path = file;
@@ -164,13 +197,21 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
   var shortHandCmd = isOneOrMore(availableCommands, function(command){
     return (command.indexOf(cmd) === 0);
   });
-  if (shortHandCmd) { return shortHandCmd; }
+
+  if (shortHandCmd) {
+    return shortHandCmd;
+  }
 
   // If there is a close match, return it
   var similarCmd = isOneOrMore(availableCommands, function(command){
     return (_s.levenshtein(cmd, command) <= 2);
   });
-  if (similarCmd) { return similarCmd; }
+
+  if (similarCmd) {
+    console.log('You typed', cmd, 'which matched', similarCmd);
+
+    return similarCmd;
+  }
 
   // If nothing, then get outta here
   return new Error(util.format('There are no commands by the name of "%s"',
@@ -221,7 +262,8 @@ Helmsman.prototype.parse = function(argv){
   }
 
   // Implicit help
-  // If <command> help <sub-command> is entered, automatically run <command>-<sub-command> --help
+  // If <command> help <sub-command> is entered, automatically run
+  // <command>-<sub-command> --help
   if (cmd === 'help') {
     cmd = args.shift();
     args = ['--help'];
