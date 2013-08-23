@@ -7,6 +7,13 @@
     "name": "Matt McManus",
     "email": "mcmanus@punkave.com"
   },
+  "contributors": [
+    {
+      "name": "Beau Gunderson",
+      "email": "beau@beaugunderson.com",
+      "url": "https://beaugunderson.com/"
+    }
+  ],
   "main": "helmsman.js",
   "scripts": {
     "test": "tap test"
