@@ -1,6 +1,8 @@
-# node-helmsman
+# node-helmsman [![Build Status](https://travis-ci.org/mattmcmanus/node-helmsman.png?branch=master)](https://travis-ci.org/mattmcmanus/node-helmsman)
 
 Easily make command line interfaces using git style subcommands executables
+
+[![NPM](https://nodei.co/npm/helmsman.png?downloads=true)](https://nodei.co/npm/helmsman/)
 
 ## So what does helmsman actually do?
 
