@@ -287,6 +287,12 @@ Helmsman.prototype.parse = function(argv){
   });
 
   domain.run(function() {
+    if(process.platform === "win32")
+    {
+        var p = fullPath.split(path.sep);
+        p.splice(p.length - 4, 3);
+        fullPath = p.join(path.sep) + ".cmd";
+    }
     var subcommand = spawn(fullPath, args, { stdio: 'inherit' });
 
     subcommand.on('close', function(code){
