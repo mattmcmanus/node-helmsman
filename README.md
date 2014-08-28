@@ -95,6 +95,10 @@ Create an instance of `helmsman`. It is an `EventEmitter` and will also begin se
 
 * `localDir`: The local module folder where to search for executable files. Defaults to the directory of the executable (eg: If you execute `<module folder>/bin/<command>` the `localDir` will be `<module folder>/bin`)
 * `prefix`: The prefix of the subcommands to search for. Defaults to the executed file (eg: If you run `<command>` it will search for files in the `localDir` that start with `<command>-`
+* `metadata`: An object containing keys of command names and sub-objects
+  containing the keys `description` and optionally `arguments`.
+* `usePath`: If `true` then helmsman will search the PATH for commands matching
+  the prefix.
 
 #### Methods
 
