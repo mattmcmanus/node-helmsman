@@ -2,7 +2,7 @@ var test = require("tap").test;
 
 var helmsman = require('..');
 
-var cli = helmsman({ prefix: 'testcommand', localDir: './bin'});
+var cli = helmsman({prefix: 'testcommand', localDir: './bin'});
 
 test('construct an instance of a helmsman', function(t){
   t.plan(5);

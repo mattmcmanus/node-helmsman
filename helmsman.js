@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 var util = require('util');
-var events = require("events");
+var events = require('events');
 var path = require('path');
 var glob = require('glob');
 var spawn = require('child_process').spawn;
@@ -51,9 +51,10 @@ function Helmsman(options){
     this.localDir = path.resolve(options.localDir);
   }
 
-  // Guess the prefix. Assume if one isn't given and that executable doesn't equal
-  // the root command filename, use the filename of the root command
-  if (!options.prefix && path.basename(process.argv[1]) !== path.basename(require.main.filename)) {
+  // Guess the prefix. Assume if one isn't given and that executable doesn't
+  // equal the root command filename, use the filename of the root command
+  if (!options.prefix &&
+      path.basename(process.argv[1]) !== path.basename(require.main.filename)) {
     this.prefix = path.basename(require.main.filename,
       path.extname(require.main.filename));
   } else {
@@ -62,7 +63,9 @@ function Helmsman(options){
   }
 
   this.availableCommands = {};
-  this.commandMaxLength = 18; //For printing help later, 18 is help <sub-command>
+
+  //For printing help later, 18 is help <sub-command>
+  this.commandMaxLength = 18;
 
   // Add a dash to the end if none was provided
   if (this.prefix.substr(-1) !== '-') {
@@ -70,7 +73,7 @@ function Helmsman(options){
   }
 
   // Local files in files in the /bin folder for an application
-  this.localFiles = glob.sync(self.prefix + "*", { cwd: self.localDir })
+  this.localFiles = glob.sync(self.prefix + '*', { cwd: self.localDir })
     .map(function (file) {
       return path.join(self.localDir, file);
     });
@@ -127,7 +130,7 @@ function Helmsman(options){
   });
 
   // help is always available!
-  self.availableCommands['help'] = {
+  self.availableCommands.help = {
     arguments: '<sub-command>',
     description: 'Show the --help for a specific command'
   };
@@ -188,9 +191,9 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
     } else if (list.length > 1) {
       return new Error(util.format('There are %d options for "%s": %s',
         list.length, cmd, list.join(', ')));
-    } else {
-      return false;
     }
+
+    return false;
   }
 
   // If there is a shorthand match, return it
@@ -240,7 +243,7 @@ Helmsman.prototype.parse = function(argv){
     var packagePath = path.join(path.dirname(require.main.filename), '..',
       'package.json');
     var pkg = require(packagePath);
-    return console.log(pkg.name + ": " + pkg.version);
+    return console.log(pkg.name + ': ' + pkg.version);
   }
 
   // Print the command list if --help is called
