@@ -16,7 +16,10 @@ var domain = require('domain').create();
 require('colors');
 
 
-function defaultFillCommandData(commandData, file, extension) {
+/**
+ * The default function used to get metadata from a command
+ */
+function defaultFillCommandData(defaults, file, extension) {
   var data;
 
   try {
@@ -28,7 +31,7 @@ function defaultFillCommandData(commandData, file, extension) {
     }
   }
 
-  return _.merge(commandData, data);
+  return _.merge(defaults, data);
 }
 
 
@@ -37,11 +40,11 @@ function defaultFillCommandData(commandData, file, extension) {
  *
  * Options:
  *
- *   * prefix: The prefix of the script files. eg: 'git-''
+ *   * prefix: The prefix of the script files. e.g.: 'git-''
  *
  * @param  {object} options   config
  */
-function Helmsman(options){
+function Helmsman(options) {
   var self = this;
 
   events.EventEmitter.call(self);
@@ -105,7 +108,7 @@ function Helmsman(options){
     });
   }
 
-  this.localFiles.forEach(function(file) {
+  this.localFiles.forEach(function (file) {
     var extension = path.extname(file);
     var name = path.basename(file, extension).substr(self.prefix.length);
 
@@ -169,7 +172,7 @@ util.inherits(Helmsman, events.EventEmitter);
  * @param  {Object} options   Contructor options
  * @return {Helmsman}         A new helmsman
  */
-function helmsman(options){
+function helmsman(options) {
   return new Helmsman(options);
 }
 
@@ -186,20 +189,19 @@ function helmsman(options){
  * @param  {[String]} availableCommands An array of all the available commands
  * @return {String}     The actual command that will be run
  */
-Helmsman.prototype.getCommand = function(cmd, availableCommands){
+Helmsman.prototype.getCommand = function (cmd, availableCommands) {
   var self = this;
 
   if (!availableCommands) {
-    availableCommands = Object.keys(self.availableCommands);
+    availableCommands = _.keys(self.availableCommands);
   }
 
-  // If there is an exact match, return it
-  if (~availableCommands.indexOf(cmd)) {
+  if (_.contains(availableCommands, cmd)) {
     return cmd;
   }
 
   // Determine how many commands match the iterator. Return one if command,
-  function isOneOrMore(commands, iterator){
+  function isOneOrMore(commands, iterator) {
     var list = commands.filter(iterator);
 
     if (list.length === 1) {
@@ -213,7 +215,7 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
   }
 
   // If there is a shorthand match, return it
-  var shortHandCmd = isOneOrMore(availableCommands, function(command){
+  var shortHandCmd = isOneOrMore(availableCommands, function (command) {
     return (command.indexOf(cmd) === 0);
   });
 
@@ -222,7 +224,7 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
   }
 
   // If there is a close match, return it
-  var similarCmd = isOneOrMore(availableCommands, function(command){
+  var similarCmd = isOneOrMore(availableCommands, function (command) {
     return (_s.levenshtein(cmd, command) <= 2);
   });
 
@@ -237,27 +239,28 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
     cmd));
 };
 
+
 /**
  * GO!
  *
- * @param {[Object]} argv   The process arguments to parse. Defaults to process.argv
+ * @param {[Object]} argv   The arguments to parse. Defaults to process.argv
  */
-Helmsman.prototype.parse = function(argv){
+Helmsman.prototype.parse = function (argv) {
   var self = this;
 
-  argv = argv || process.argv; // If no arguments are passed, assume process.argv
+  // Default to process.argv
+  argv = argv || process.argv;
 
   var args = argv.slice(2);
 
   // Much of the following heavily inspired or simply taken from component/bin
   // https://github.com/component/component/blob/master/bin/component
 
-  // Print the modules version number
+  // Print the module's version number
   if (args[0] === '--version') {
-    // BOLD assumption that the file is in ./bin
-    var packagePath = path.join(path.dirname(require.main.filename), '..',
-      'package.json');
-    var pkg = require(packagePath);
+    var pkg = require(path.join(path.dirname(require.main.filename), '..',
+      'package.json'));
+
     return console.log(pkg.name + ': ' + pkg.version);
   }
 
@@ -291,18 +294,18 @@ Helmsman.prototype.parse = function(argv){
   var fullPath = self.availableCommands[cmd] &&
     self.availableCommands[cmd].path;
 
-  domain.on('error', function(err) {
+  domain.on('error', function (err) {
     if (err.code === 'EACCES') {
-      console.error('');
+      console.error();
       console.error('Could not execute the subcommand: ' + self.prefix + cmd);
-      console.error('');
+      console.error();
       console.error('Consider running:\n chmod +x', fullPath);
     } else {
       console.error(err.stack.red);
     }
   });
 
-  domain.run(function() {
+  domain.run(function () {
     // Windows doesn't know how to execute .js files, we help it out by
     // launching it with node
     if (process.platform === 'win32' &&
@@ -313,7 +316,7 @@ Helmsman.prototype.parse = function(argv){
 
     var subcommand = spawn(fullPath, args, {stdio: 'inherit'});
 
-    subcommand.on('close', function(code){
+    subcommand.on('close', function (code) {
       process.exit(code);
     });
   });
