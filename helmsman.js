@@ -42,8 +42,11 @@ function Helmsman(options){
   // Add option defaults
   options = _.merge({
     usePath: false,
-    metadata: {}
+    metadata: {},
+    nodePath: 'node'
   }, options);
+
+  this.nodePath = options.nodePath;
 
   if (!options.localDir) {
     this.localDir = path.dirname(module.parent.filename);
@@ -287,11 +290,12 @@ Helmsman.prototype.parse = function(argv){
   });
 
   domain.run(function() {
-    if(process.platform === "win32")
-    {
-        var p = fullPath.split(path.sep);
-        p.splice(p.length - 4, 3);
-        fullPath = p.join(path.sep) + ".cmd";
+    // Windows doesn't know how to execute .js files, we help it out by
+    // launching it with node
+    if (process.platform === 'win32' &&
+        path.extname(fullPath) === '.js') {
+      args.unshift(fullPath);
+      fullPath = self.nodePath;
     }
     var subcommand = spawn(fullPath, args, { stdio: 'inherit' });
 
