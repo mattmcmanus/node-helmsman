@@ -116,7 +116,9 @@ function Helmsman(options){
       path: file
     };
 
-    var commandData;
+    // We get the defaults as a minimum if there's no strategy for the
+    // extension and no custom fillCommandData function specified
+    var commandData = _.clone(defaultCommandData);
 
     // Load the command data from the metadata option if present
     if (options.metadata[name]) {
