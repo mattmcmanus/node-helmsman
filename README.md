@@ -1,22 +1,37 @@
 # node-helmsman [![Build Status](https://travis-ci.org/mattmcmanus/node-helmsman.png?branch=master)](https://travis-ci.org/mattmcmanus/node-helmsman)
 
-Easily make command line interfaces using git style subcommands executables
+Easily make command line interfaces using git style subcommand executables
 
 [![NPM](https://nodei.co/npm/helmsman.png?downloads=true)](https://nodei.co/npm/helmsman/)
 
 ## So what does helmsman actually do?
 
-A common setup for command line applications is `<command> <subcommand> <arguments/options>` (for example: `git commit -m 'message'`). Rather than having a giant file that `switch`es or `if else`s over each potential subcommand, it's much neater to store each subcommand in it's own file (`bin/command`,`bin/command-subcomand`, `bin/command-subcommand2`, etc). Helmsman makes it easy to add, modify or delete subcommands without having to do housekeeping steps in your root command file or `package.json`
+A common setup for command line applications is `<command> <subcommand>
+<arguments/options>` (for example: `git commit -m 'message'`). Rather than
+having a giant file that `switch`es or `if else`s over each potential
+subcommand, it's much neater to store each subcommand in it's own file
+(`bin/command`,`bin/command-subcomand`, `bin/command-subcommand2`, etc).
+Helmsman makes it easy to add, modify or delete subcommands without having to
+do housekeeping steps in your root command file or `package.json`
 
 ### Features
 
-* Helmsman is automatically aware of all the `<command>-<subcommand>` files in your modules `bin/` (or any folder you tell it to look at)
-* `<command> --help` automatically generates help output, telling you all the subcommands that are available to you
-* `<command> --version` prints the version from package.json of the module requiring helmsman
-* Running `<command> <subcommand>` automatically executes the `<command>-<subcommand>` file, passing along all the arguments & options
-* Helmsman is capable of smart command completion including dynamic shorthands and spelling correction (eg: `<command> st` => `<command> status` or `<command> isntall` => `<command> install` )
-* Use whatever option parsing library you want for your subcommands ([optimist](https://github.com/substack/node-optimist), [commander](https://github.com/visionmedia/commander.js), etc)
-* Helmsman is [minimally intrusive in your subcommands](#setting-up-your-sub-commands-command-subcommand)
+* Helmsman is automatically aware of all the `<command>-<subcommand>` files in
+  your modules `bin/` (or any folder you tell it to look at)
+* `<command> --help` automatically generates help output, telling you all the
+  subcommands that are available to you
+* `<command> --version` prints the version from package.json of the module
+  requiring helmsman
+* Running `<command> <subcommand>` automatically executes the
+  `<command>-<subcommand>` file, passing along all the arguments & options
+* Helmsman is capable of smart command completion including dynamic shorthands
+  and spelling correction (eg: `<command> st` => `<command> status` or
+  `<command> isntall` => `<command> install` )
+* Use whatever option parsing library you want for your subcommands
+  ([optimist](https://github.com/substack/node-optimist),
+  [commander](https://github.com/visionmedia/commander.js), etc)
+* Helmsman is [minimally intrusive in your
+  subcommands](#setting-up-your-sub-commands-command-subcommand)
 
 ## Installation & Setup
 
@@ -38,7 +53,8 @@ var helmsman = require('helmsman');
 helmsman().parse();
 ```
 
-Want to append in additional help messaging or modify the arguments that are parsed?
+Want to append in additional help messaging or modify the arguments that are
+parsed?
 
 ```javascript
 #!/usr/bin/env node
@@ -61,7 +77,9 @@ cli.parse(argv);
 
 ### Setting up your sub-commands: `<command>-<subcommand>`
 
-For your sub-executables to work with `helmsman` you need to do two things: 1. Expose metadata about the task, like its description and 2. Make sure the meat & potatoes of the script only runs when it's directly called
+For your sub-executables to work with `helmsman` you need to do two things: 1.
+Expose metadata about the task, like its description and 2. Make sure the meat
+& potatoes of the script only runs when it's directly called
 
 ```javascript
 #!/usr/bin/env node
@@ -77,7 +95,9 @@ if (require.main === module) {
 }
 ```
 
-**Note:** If you're not putting each script in `package.json`'s `bin` object, make sure that the sub-commands are executable by running `chmod +x bin/<command>-<sub-command>
+**Note:** If you're not putting each script in `package.json`'s `bin` object,
+make sure that the sub-commands are executable by running `chmod +x
+bin/<command>-<sub-command>
 
 ## API
 
@@ -85,34 +105,53 @@ if (require.main === module) {
 
 * `options` {Object}
 
-Create an instance of `helmsman`. It is an `EventEmitter` and will also begin searching for files once it's instantiated. 
+Create an instance of `helmsman`. It is an `EventEmitter` and will also begin
+searching for files once it's instantiated. 
 
 #### Events
 
-* `--help`: Emitted when `--help` is passed as the first option or no commands or options are passed
+* `--help`: Emitted when `--help` is passed as the first option or no commands
+  or options are passed
 
 #### Options
 
-* `localDir`: The local module folder where to search for executable files. Defaults to the directory of the executable (eg: If you execute `<module folder>/bin/<command>` the `localDir` will be `<module folder>/bin`)
-* `prefix`: The prefix of the subcommands to search for. Defaults to the executed file (eg: If you run `<command>` it will search for files in the `localDir` that start with `<command>-`
+* `localDir`: The local module folder where to search for executable files.
+  Defaults to the directory of the executable (eg: If you execute
+  `<module folder>/bin/<command>` the `localDir` will be `<module folder>/bin`)
+* `prefix`: The prefix of the subcommands to search for. Defaults to the
+  executed file (eg: If you run `<command>` it will search for files in the
+  `localDir` that start with `<command>-`
 * `metadata`: An object containing keys of command names and sub-objects
-  containing the keys `description` and optionally `arguments`.
-* `usePath`: If `true` then helmsman will search the PATH for commands matching
-  the prefix.
+  containing the keys `description` and optionally `arguments`
+* `usePath`: If `true` helmsman will search the PATH for commands matching the
+  prefix
+* `fillCommandData`: An optional function to use to retrieve metadata from a
+  command file; takes a defaults object, a filename, and an extension
+* `fallbackCommandData`: If `true` helmsman will use its default function to
+  retrieve metadata from a command file if the user-specified fuction returns
+  a falsy value
+* `ignoreRequireFail`: If `true` helmsman will ignore failures to require an
+  extensionless or `.js`-extensioned command file
+* `nodePath`: The path to the node executable on Windows, defaults to `'node'`
 
 #### Methods
 
-* `parse([argv])` Parse `argv` or `process.argv` if there is no argv and either display the help or run the subcommand
+* `parse([argv])` Parse `argv` or `process.argv` if there is no argv and either
+  display the help or run the subcommand
 
 ### <subcommand> `exports.command`
 
 * `description`: A one line description of the command. Required.
-* `arguments`: A shorthand for options the subcommand accepts. Generated help will include it next to command. See `help <command>`"
+* `arguments`: A shorthand for options the subcommand accepts. Generated help
+  will include it next to command. See `help <command>`"
 
 ## TODO
 
-* [Allow for automatically including npm installed libraries](https://github.com/mattmcmanus/node-helmsman/issues/2)
+* [Allow for automatically including npm installed
+  libraries](https://github.com/mattmcmanus/node-helmsman/issues/2)
 
 ## Thanks
 
-Much of this was inspired by TJ Holowaychuk's [commander](https://github.com/visionmedia/commander.js) and [component](https://github.com/component/component)
+Much of this was inspired by TJ Holowaychuk's
+[commander](https://github.com/visionmedia/commander.js) and
+[component](https://github.com/component/component)

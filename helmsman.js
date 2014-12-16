@@ -15,24 +15,36 @@ var domain = require('domain').create();
 
 require('colors');
 
+
 /**
- * Exports
+ * The default function used to get metadata from a command
  */
+function defaultFillCommandData(defaults, file, extension) {
+  var data;
 
-module.exports = exports = helmsman;
+  try {
+    data = require(file).command || {};
+  } catch (e) {
+    // If it's JavaScript then return the error
+    if (extension === '.js') {
+      data = {failedRequire: e};
+    }
+  }
 
-exports.Helmsman = Helmsman;
+  return _.merge(defaults, data);
+}
+
 
 /**
  * The Helmsman constructor
  *
  * Options:
  *
- *   * prefix: The prefix of the script files. eg: 'git-''
+ *   * prefix: The prefix of the script files. e.g.: 'git-''
  *
  * @param  {object} options   config
  */
-function Helmsman(options){
+function Helmsman(options) {
   var self = this;
 
   events.EventEmitter.call(self);
@@ -42,8 +54,18 @@ function Helmsman(options){
   // Add option defaults
   options = _.merge({
     usePath: false,
-    metadata: {}
+    metadata: {},
+    fillCommandData: defaultFillCommandData,
+    fallbackCommandData: true,
+    ignoreRequireFail: true,
+    nodePath: 'node'
   }, options);
+
+  this.fillCommandData = options.fillCommandData;
+  this.fallbackCommandData = options.fallbackCommandData;
+  this.ignoreRequireFail = options.ignoreRequireFail;
+
+  this.nodePath = options.nodePath;
 
   if (!options.localDir) {
     this.localDir = path.dirname(module.parent.filename);
@@ -64,16 +86,13 @@ function Helmsman(options){
 
   this.availableCommands = {};
 
-  //For printing help later, 18 is help <sub-command>
-  this.commandMaxLength = 18;
-
   // Add a dash to the end if none was provided
   if (this.prefix.substr(-1) !== '-') {
     this.prefix += '-';
   }
 
   // Local files in files in the /bin folder for an application
-  this.localFiles = glob.sync(self.prefix + '*', { cwd: self.localDir })
+  this.localFiles = glob.sync(self.prefix + '*', {cwd: self.localDir})
     .map(function (file) {
       return path.join(self.localDir, file);
     });
@@ -89,44 +108,45 @@ function Helmsman(options){
     });
   }
 
-  this.localFiles.forEach(function(file) {
+  this.localFiles.forEach(function (file) {
     var extension = path.extname(file);
     var name = path.basename(file, extension).substr(self.prefix.length);
 
-    var commandData = {
-      description: ''
+    var defaultCommandData = {
+      name: name,
+      description: '',
+      arguments: '',
+      path: file
     };
+
+    // We get the defaults as a minimum if there's no strategy for the
+    // extension and no custom fillCommandData function specified
+    var commandData = _.clone(defaultCommandData);
 
     // Load the command data from the metadata option if present
     if (options.metadata[name]) {
-      commandData = _.merge(commandData, options.metadata[name]);
+      commandData = _.merge(defaultCommandData, options.metadata[name]);
     // Only try to get metadata from commands written in JavaScript
-    } else if (extension === '' || extension === '.js') {
-      try {
-        commandData = _.merge(commandData, require(file).command);
-      } catch (e) {
-        // If it is JavaScript and we fail to require it's an error
-        if (extension === '.js') {
-          util.error(util.format('The file "%s" did not load correctly: %s',
-            file, e).red);
+    } else if ((extension === '' || extension === '.js') &&
+               self.fillCommandData === defaultFillCommandData) {
+      commandData = self.fillCommandData(defaultCommandData, file, extension);
 
-          process.exit(1);
-        }
+      if (!self.ignoreRequireFail && commandData.failedRequire) {
+        util.error(util.format('The file "%s" did not load correctly: %s',
+          file, commandData.failedRequire).red);
+
+        process.exit(1);
+      }
+    } else if (self.fillCommandData !== defaultFillCommandData) {
+      commandData = self.fillCommandData(defaultCommandData, file, extension);
+
+      if (!commandData && self.fallbackCommandData) {
+        commandData = defaultFillCommandData(defaultCommandData,
+                                             file, extension);
       }
     }
 
-    commandData.path = file;
-
     self.availableCommands[name] = commandData;
-
-    var fullCommand = commandData.arguments ?
-      name + ' ' + commandData.arguments :
-      name;
-
-    // Figure out the longest command name for printing --help
-    if (fullCommand.length > self.commandMaxLength) {
-      self.commandMaxLength = name.length;
-    }
   });
 
   // help is always available!
@@ -152,8 +172,7 @@ util.inherits(Helmsman, events.EventEmitter);
  * @param  {Object} options   Contructor options
  * @return {Helmsman}         A new helmsman
  */
-
-function helmsman(options){
+function helmsman(options) {
   return new Helmsman(options);
 }
 
@@ -170,20 +189,19 @@ function helmsman(options){
  * @param  {[String]} availableCommands An array of all the available commands
  * @return {String}     The actual command that will be run
  */
-Helmsman.prototype.getCommand = function(cmd, availableCommands){
+Helmsman.prototype.getCommand = function (cmd, availableCommands) {
   var self = this;
 
   if (!availableCommands) {
-    availableCommands = Object.keys(self.availableCommands);
+    availableCommands = _.keys(self.availableCommands);
   }
 
-  // If there is an exact match, return it
-  if (~availableCommands.indexOf(cmd)) {
+  if (_.contains(availableCommands, cmd)) {
     return cmd;
   }
 
   // Determine how many commands match the iterator. Return one if command,
-  function isOneOrMore(commands, iterator){
+  function isOneOrMore(commands, iterator) {
     var list = commands.filter(iterator);
 
     if (list.length === 1) {
@@ -197,7 +215,7 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
   }
 
   // If there is a shorthand match, return it
-  var shortHandCmd = isOneOrMore(availableCommands, function(command){
+  var shortHandCmd = isOneOrMore(availableCommands, function (command) {
     return (command.indexOf(cmd) === 0);
   });
 
@@ -206,7 +224,7 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
   }
 
   // If there is a close match, return it
-  var similarCmd = isOneOrMore(availableCommands, function(command){
+  var similarCmd = isOneOrMore(availableCommands, function (command) {
     return (_s.levenshtein(cmd, command) <= 2);
   });
 
@@ -221,38 +239,39 @@ Helmsman.prototype.getCommand = function(cmd, availableCommands){
     cmd));
 };
 
+
 /**
  * GO!
  *
- * @param {[Object]} argv   The process arguments to parse. Defaults to process.argv
+ * @param {[Object]} argv   The arguments to parse. Defaults to process.argv
  */
-
-Helmsman.prototype.parse = function(argv){
+Helmsman.prototype.parse = function (argv) {
   var self = this;
 
-  argv = argv || process.argv; // If no arguments are passed, assume process.argv
+  // Default to process.argv
+  argv = argv || process.argv;
 
   var args = argv.slice(2);
 
   // Much of the following heavily inspired or simply taken from component/bin
   // https://github.com/component/component/blob/master/bin/component
 
-  // Print the modules version number
+  // Print the module's version number
   if (args[0] === '--version') {
-    // BOLD assumption that the file is in ./bin
-    var packagePath = path.join(path.dirname(require.main.filename), '..',
-      'package.json');
-    var pkg = require(packagePath);
+    var pkg = require(path.join(path.dirname(require.main.filename), '..',
+      'package.json'));
+
     return console.log(pkg.name + ': ' + pkg.version);
   }
 
   // Print the command list if --help is called
   if (args[0] === '--help' ||
-    !args.length ||
-    args[0][0] === '-' ||
-    (args[0] === 'help' && args.length === 1) ||
-    (self.getCommand(args[0]) === 'help' && args.length === 1)) {
+      !args.length ||
+      args[0][0] === '-' ||
+      (args[0] === 'help' && args.length === 1) ||
+      (self.getCommand(args[0]) === 'help' && args.length === 1)) {
     self.emit('--help');
+
     return self.showHelp();
   }
 
@@ -275,27 +294,29 @@ Helmsman.prototype.parse = function(argv){
   var fullPath = self.availableCommands[cmd] &&
     self.availableCommands[cmd].path;
 
-  domain.on('error', function(err) {
+  domain.on('error', function (err) {
     if (err.code === 'EACCES') {
-      console.error('');
+      console.error();
       console.error('Could not execute the subcommand: ' + self.prefix + cmd);
-      console.error('');
+      console.error();
       console.error('Consider running:\n chmod +x', fullPath);
     } else {
       console.error(err.stack.red);
     }
   });
 
-  domain.run(function() {
-    if(process.platform === "win32")
-    {
-        var p = fullPath.split(path.sep);
-        p.splice(p.length - 4, 3);
-        fullPath = p.join(path.sep) + ".cmd";
+  domain.run(function () {
+    // Windows doesn't know how to execute .js files, we help it out by
+    // launching it with node
+    if (process.platform === 'win32' &&
+        path.extname(fullPath) === '.js') {
+      args.unshift(fullPath);
+      fullPath = self.nodePath;
     }
-    var subcommand = spawn(fullPath, args, { stdio: 'inherit' });
 
-    subcommand.on('close', function(code){
+    var subcommand = spawn(fullPath, args, {stdio: 'inherit'});
+
+    subcommand.on('close', function (code) {
       process.exit(code);
     });
   });
@@ -305,39 +326,30 @@ Helmsman.prototype.parse = function(argv){
 /**
  * Show the help
  */
-
-Helmsman.prototype.showHelp = function(){
-  var self = this;
-  var fullCommands = [];
-
-  console.log('');
+Helmsman.prototype.showHelp = function () {
+  console.log();
   console.log('Commands:');
-  console.log('');
+  console.log();
 
-  for (var command in self.availableCommands) {
-    var fullCommand = command;
+  var strings = _.map(this.availableCommands, function (command) {
+    return command.name + ' ' + command.arguments;
+  });
 
-    if (self.availableCommands[command].arguments) {
-      fullCommand += ' ' + self.availableCommands[command].arguments;
-    }
+  var maxLength = _.max(_.pluck(strings, 'length'));
 
-    if (fullCommand.length > self.commandMaxLength) {
-      self.commandMaxLength = fullCommand.length;
-    }
+  var descriptions = _.pluck(this.availableCommands, 'description');
 
-    fullCommands.push([fullCommand, self.availableCommands[command].description]);
-  }
-
-  fullCommands.forEach(function(command){
-    var diff = (self.commandMaxLength - command[0].length);
-
-    // Pad spaces at the end of each command so help descriptions line up
-    for (var i = 0; i < diff; i++) {
-      command[0] += ' ';
-    }
-
-    console.log('   %s     %s', command[0], command[1]);
+  _.zip(strings, descriptions).forEach(function (c) {
+    console.log('   %s     %s', _s.rpad(c[0], maxLength), c[1]);
   });
 
   process.exit();
 };
+
+
+/**
+ * Exports
+ */
+module.exports = exports = helmsman;
+
+exports.Helmsman = Helmsman;
