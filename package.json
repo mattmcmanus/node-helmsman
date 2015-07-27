@@ -1,6 +1,6 @@
 {
   "name": "helmsman",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Easily make command line interfaces using git style subcommands",
   "homepage": "https://github.com/mattmcmanus/node-helmsman",
   "author": {
@@ -34,12 +34,7 @@
     "subcommand",
     "sub-command"
   ],
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/mattmcmanus/node-helmsman/blob/master/LICENSE-MIT"
-    }
-  ],
+  "license": "MIT",
   "devDependencies": {
     "tap": "~0.4.3"
   },
