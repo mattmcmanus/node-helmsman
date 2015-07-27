@@ -151,6 +151,7 @@ function Helmsman(options) {
 
   // help is always available!
   self.availableCommands.help = {
+    name: 'help',
     arguments: '<sub-command>',
     description: 'Show the --help for a specific command'
   };
