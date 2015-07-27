@@ -132,7 +132,7 @@ function Helmsman(options) {
       commandData = self.fillCommandData(defaultCommandData, file, extension);
 
       if (!self.ignoreRequireFail && commandData.failedRequire) {
-        util.error(util.format('The file "%s" did not load correctly: %s',
+        console.error(util.format('The file "%s" did not load correctly: %s',
           file, commandData.failedRequire).red);
 
         process.exit(1);
@@ -278,7 +278,7 @@ Helmsman.prototype.parse = function (argv) {
   var cmd = self.getCommand(args.shift());
 
   if (util.isError(cmd)) {
-    util.error(cmd.message.red);
+    console.error(cmd.message.red);
     self.showHelp();
     process.exit(1);
   }
