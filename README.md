@@ -1,5 +1,7 @@
 # node-helmsman [![Build Status](https://travis-ci.org/mattmcmanus/node-helmsman.png?branch=master)](https://travis-ci.org/mattmcmanus/node-helmsman)
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/mattmcmanus/node-helmsman.svg)](https://greenkeeper.io/)
+
 Easily make command line interfaces using git style subcommand executables
 
 [![NPM](https://nodei.co/npm/helmsman.png?downloads=true)](https://nodei.co/npm/helmsman/)
