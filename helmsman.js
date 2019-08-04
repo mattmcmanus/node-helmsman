@@ -73,8 +73,6 @@ function Helmsman(options) {
     this.localDir = path.resolve(options.localDir);
   }
 
-  console.log('localDir', this.localDir);
-
   // Guess the prefix. Assume if one isn't given and that executable doesn't
   // equal the root command filename, use the filename of the root command
   if (!options.prefix &&
