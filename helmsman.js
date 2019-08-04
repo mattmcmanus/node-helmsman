@@ -73,6 +73,8 @@ function Helmsman(options) {
     this.localDir = path.resolve(options.localDir);
   }
 
+  console.log('localDir', this.localDir);
+
   // Guess the prefix. Assume if one isn't given and that executable doesn't
   // equal the root command filename, use the filename of the root command
   if (!options.prefix &&
@@ -197,7 +199,7 @@ Helmsman.prototype.getCommand = function (cmd, availableCommands) {
     availableCommands = _.keys(self.availableCommands);
   }
 
-  if (_.contains(availableCommands, cmd)) {
+  if (_.includes(availableCommands, cmd)) {
     return cmd;
   }
 
@@ -336,9 +338,9 @@ Helmsman.prototype.showHelp = function () {
     return command.name + ' ' + command.arguments;
   });
 
-  var maxLength = _.max(_.pluck(strings, 'length'));
+  var maxLength = _.max(_.map(strings, 'length'));
 
-  var descriptions = _.pluck(this.availableCommands, 'description');
+  var descriptions = _.map(this.availableCommands, 'description');
 
   _.zip(strings, descriptions).forEach(function (c) {
     console.log('   %s     %s', _s.rpad(c[0], maxLength), c[1]);
